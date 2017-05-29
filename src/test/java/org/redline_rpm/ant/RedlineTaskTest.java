@@ -33,7 +33,7 @@ import static org.junit.Assert.*;
 public class RedlineTaskTest extends TestBase {
 
 	static final SimpleDateFormat fmt = new SimpleDateFormat("EEE MMM dd yyyy", Locale.ENGLISH);
-	
+
 	@Test
 	public void testBadName() throws Exception {
 			File dir = ensureTargetDir();
@@ -128,7 +128,7 @@ public class RedlineTaskTest extends TestBase {
 			// Pass
 		}
 	}
-	
+
 	@Test
 	public void testBadEpoch() throws Exception {
 		RedlineTask task = new RedlineTask();
@@ -162,7 +162,7 @@ public class RedlineTaskTest extends TestBase {
 		} catch (IllegalArgumentException iae) {
 			// Pass
 		}
-		
+
 		// test epoch with illegal chars abc
 		task.setEpoch("abc");
 		try {
@@ -324,7 +324,7 @@ public class RedlineTaskTest extends TestBase {
 		assertHeaderEquals("/bin/sh", format, Header.HeaderTag.PREUNPROG);
 		assertHeaderEquals("/usr/bin/perl", format, Header.HeaderTag.POSTUNPROG);
 	}
-	
+
 	@Test
 	public void testChangeLog() throws Exception {
 
@@ -356,14 +356,14 @@ public class RedlineTaskTest extends TestBase {
 		assertHeaderEquals("/bin/sh", format, Header.HeaderTag.POSTINPROG);
 		assertHeaderEquals("/bin/sh", format, Header.HeaderTag.PREUNPROG);
 		assertHeaderEquals("/usr/bin/perl", format, Header.HeaderTag.POSTUNPROG);
-		
+
 		assertDateEntryHeaderEqualsAt("Tue Feb 24 2015", format,
 				Header.HeaderTag.CHANGELOGTIME,10, 0);
 		assertHeaderEqualsAt("Thomas Jefferson", format,
 				Header.HeaderTag.CHANGELOGNAME,10, 4);
 		assertHeaderEqualsAt("- Initial rpm for this package", format,
 				Header.HeaderTag.CHANGELOGTEXT,10, 9);
-		String expectedMultiLineDescription = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod \n"+ 
+		String expectedMultiLineDescription = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod \n"+
 											  "tempor incididunt ut labore et dolore magna aliqua";
 		assertHeaderEqualsAt(expectedMultiLineDescription, format,
 				Header.HeaderTag.CHANGELOGTEXT,10, 0);
@@ -416,6 +416,24 @@ public class RedlineTaskTest extends TestBase {
 		RedlineTask task = createBasicTask( dir);
 		task.setPrivateKeyRingFile( new File( getFileResource( "/pgp/secring.gpg")));
 		task.setPrivateKeyPassphrase( "redline");
+		task.execute();
+
+		Format format = getFormat( filename);
+		assertNotNull( format.getSignature().getEntry( RSAHEADER));
+		assertNotNull( format.getSignature().getEntry( LEGACY_PGP));
+	}
+
+	@Test
+	public void testSigningLargeKey() throws Exception {
+
+		File dir = ensureTargetDir();
+
+		File filename = new File(dir, "rpmtest-1.0-1.noarch.rpm");
+
+		RedlineTask task = createBasicTask( dir);
+		task.setPrivateKeyRingFile( new File( getFileResource( "/pgp/largesecring.gpg")));
+		task.setPrivateKeyPassphrase("");
+		task.setPrivateKeySignatureSize(543);
 		task.execute();
 
 		Format format = getFormat( filename);
@@ -494,7 +512,7 @@ public class RedlineTaskTest extends TestBase {
 
 		assertArrayEquals("Entry value : " + tag.getName(), expected, values);
 	}
-	
+
 	private void assertDateEntryHeaderEqualsAt(String expected, Format format, AbstractHeader.Tag tag, int size, int pos) {
 		assertNotNull("null format", format);
 		AbstractHeader.Entry< ?> entry = format.getHeader().getEntry(tag);
@@ -504,7 +522,7 @@ public class RedlineTaskTest extends TestBase {
 		int[] values = (int[]) entry.getValues();
 		assertNotNull("null values", values);
 		assertEquals("Entry size : " + tag.getName(), size, values.length);
-		
+
 		Date date = new Date((long) values[pos] * 1000);
 
 		assertEquals("Entry value : " + tag.getName(), expected, fmt.format(date));

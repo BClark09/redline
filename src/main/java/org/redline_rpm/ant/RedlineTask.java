@@ -68,7 +68,7 @@ public class RedlineTask extends Task {
 	protected List< TriggerIn> triggersIn = new ArrayList< TriggerIn>();
 	protected List< TriggerUn> triggersUn = new ArrayList< TriggerUn>();
 	protected List< TriggerPostUn> triggersPostUn = new ArrayList< TriggerPostUn>();
-	
+
 	protected List< BuiltIn> builtIns = new ArrayList< BuiltIn>();
 
 	protected File preTransScript;
@@ -78,11 +78,12 @@ public class RedlineTask extends Task {
 	protected File postUninstallScript;
 	protected File postTransScript;
 
-    protected File privateKeyRingFile;
-    protected String privateKeyId;
-    protected String privateKeyPassphrase;
-    
-    protected File changeLog;
+	protected int privateKeySignatureSize;
+	protected File privateKeyRingFile;
+	protected String privateKeyId;
+	protected String privateKeyPassphrase;
+
+	protected File changeLog;
 
 	public RedlineTask() {
 		try {
@@ -97,7 +98,7 @@ public class RedlineTask extends Task {
 		if ( name == null) throw new BuildException( "Attribute 'name' is required.");
 		if ( version == null) throw new BuildException( "Attribute 'version' is required.");
 		if ( group == null) throw new BuildException( "Attribute 'group' is required.");
-		
+
 		int numEpoch;
 		try {
 			numEpoch = Integer.parseInt( epoch);
@@ -122,13 +123,14 @@ public class RedlineTask extends Task {
 			builder.setProvides( provides);
 		}
 		builder.setPrefixes( prefixes == null ? null : prefixes.split(","));
-        builder.setPrivateKeyRingFile( privateKeyRingFile);
-        builder.setPrivateKeyId( privateKeyId);
-        builder.setPrivateKeyPassphrase( privateKeyPassphrase);
+		builder.setPrivateKeyRingFile( privateKeyRingFile);
+		builder.setPrivateKeyId( privateKeyId);
+		builder.setPrivateKeyPassphrase( privateKeyPassphrase);
+		builder.setPrivateKeySignatureSize( privateKeySignatureSize);
 		if (sourcePackage != null) {
 			builder.addHeaderEntry(Header.HeaderTag.SOURCERPM, sourcePackage);
 		}
-		
+
 		// add built-ins
 		for ( BuiltIn builtIn : builtIns) {
 			String text = builtIn.getDirectory();
@@ -170,20 +172,20 @@ public class RedlineTask extends Task {
 				if ( !prefix.endsWith( "/")) prefix += "/";
 				DirectoryScanner scanner = fileset.getDirectoryScanner( getProject());
 
-                int filemode = fileset.getFileMode( getProject()) & 07777;
+				int filemode = fileset.getFileMode( getProject()) & 07777;
 				int dirmode = fileset.getDirMode( getProject()) & 07777;
 				String username = null;
 				String group = null;
-                Directive directive = null;
+				Directive directive = null;
 
 				if (fileset instanceof TarFileSet) {
 					TarFileSet tarFileSet = (TarFileSet)fileset;
 					username = tarFileSet.getUserName();
 					group = tarFileSet.getGroup();
-                    if (fileset instanceof RpmFileSet) {
-                        RpmFileSet rpmFileSet = (RpmFileSet)fileset;
-                        directive = rpmFileSet.getDirective();
-                    }
+					if (fileset instanceof RpmFileSet) {
+						RpmFileSet rpmFileSet = (RpmFileSet)fileset;
+						directive = rpmFileSet.getDirective();
+					}
 				}
 
 				// include any directories, including empty ones, duplicates will be ignored when we scan included files
@@ -254,7 +256,7 @@ public class RedlineTask extends Task {
 	public void setDestination( File destination) { this.destination = destination; }
 	public void addZipfileset( ZipFileSet fileset) { filesets.add( fileset); }
 	public void addTarfileset( TarFileSet fileset) { filesets.add( fileset); }
-    public void addRpmfileset( RpmFileSet fileset) { filesets.add( fileset); }
+	public void addRpmfileset( RpmFileSet fileset) { filesets.add( fileset); }
 	public void addGhost( Ghost ghost) { ghosts.add( ghost); }
 	public void addEmptyDir( EmptyDir emptyDir) { emptyDirs.add( emptyDir); }
 	public void addLink( Link link) { links.add( link); }
@@ -273,10 +275,11 @@ public class RedlineTask extends Task {
 	public void setPostUninstallScript( File postUninstallScript) { this.postUninstallScript = postUninstallScript; }
 	public void setPostTransScript( File postTransScript) { this.postTransScript = postTransScript; }
 	public void setSourcePackage( String sourcePackage) { this.sourcePackage = sourcePackage; }
-    public void setPrivateKeyRingFile( File privateKeyRingFile) { this.privateKeyRingFile = privateKeyRingFile; }
-    public void setPrivateKeyId( String privateKeyId ) { this.privateKeyId = privateKeyId; }
-    public void setPrivateKeyPassphrase( String privateKeyPassphrase ) { this.privateKeyPassphrase = privateKeyPassphrase; }
-    public void addBuiltin( BuiltIn builtIn) { builtIns.add(builtIn); }
+	public void setPrivateKeyRingFile( File privateKeyRingFile) { this.privateKeyRingFile = privateKeyRingFile; }
+	public void setPrivateKeyId( String privateKeyId ) { this.privateKeyId = privateKeyId; }
+	public void setPrivateKeyPassphrase( String privateKeyPassphrase ) { this.privateKeyPassphrase = privateKeyPassphrase; }
+	public void setPrivateKeySignatureSize( int privateKeySignatureSize ) { this.privateKeySignatureSize = privateKeySignatureSize; }
+	public void addBuiltin( BuiltIn builtIn) { builtIns.add(builtIn); }
 	public void setChangeLog(File changeLog) { this.changeLog = changeLog; }
-	
+
 }

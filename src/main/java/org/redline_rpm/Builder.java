@@ -84,15 +84,16 @@ public class Builder {
 
 	@SuppressWarnings( "unchecked")
 	protected final Entry< byte[]> signature = ( Entry< byte[]>) format.getSignature().addEntry( SIGNATURES, 16);
-	
+
 	@SuppressWarnings( "unchecked")
 	protected final Entry< byte[]> immutable = ( Entry< byte[]>) format.getHeader().addEntry( HEADERIMMUTABLE, 16);
 
 	protected Contents contents = new Contents();
-    protected File privateKeyRingFile;
-    protected String privateKeyId;
-    protected String privateKeyPassphrase;
-    protected PGPPrivateKey privateKey;
+	protected File privateKeyRingFile;
+	protected String privateKeyId;
+	protected String privateKeyPassphrase;
+	protected PGPPrivateKey privateKey;
+	protected int privateKeySignatureSize = 287;
 
 	/**
 	 * Initializes the builder and sets some required fields to known values.
@@ -108,7 +109,7 @@ public class Builder {
 		addDependencyLess( "rpmlib(CompressedFileNames)", "3.0.4-1");
 		addDependencyLess( "rpmlib(PayloadFilesHavePrefix)", "4.0-1");
 	}
-	
+
 	public void addBuiltinDirectory(String builtinDirectory) {
 		contents.addLocalBuiltinDirectory(builtinDirectory);
 	}
@@ -116,39 +117,39 @@ public class Builder {
 	public void addObsoletes(final String name, final int comparison, final String version) {
 		obsoletes.add(new Dependency(name, version, comparison));
 	}
-	
+
 	public void addObsoletesLess (final CharSequence name, final CharSequence version) {
 		int flag = LESS | EQUAL;
 		addObsoletes(name, version, flag);
 	}
-	
+
 	public void addObsoletesMore (final CharSequence name, final CharSequence version) {
 		int flag = GREATER | EQUAL;
 		addObsoletes(name, version, flag);
 	}
-	
+
 	protected void addObsoletes( final CharSequence name, final CharSequence version, final int flag) {
 		obsoletes.add(new Dependency(name.toString(), version.toString(), flag));
 	}
-	
+
 	public void addConflicts(final String name, final int comparison, final String version) {
 		conflicts.add(new Dependency(name, version, comparison));
 	}
-	
+
 	public void addConflictsLess(final CharSequence name, final CharSequence version) {
 		int flag = LESS | EQUAL;
 		addConflicts(name, version, flag);
 	}
-	
+
 	public void addConflictsMore(final CharSequence name, final CharSequence version) {
 		int flag = GREATER | EQUAL;
 		addConflicts(name, version, flag);
 	}
-	
+
 	protected void addConflicts(final CharSequence name, final CharSequence version, final int flag) {
 		conflicts.add(new Dependency(name.toString(), version.toString(), flag));
 	}
-	
+
 	public void addProvides(final String name, final String version) {
 		provides.put(name, new Dependency(name, version, version.length() > 0 ? EQUAL : 0));
 	}
@@ -156,7 +157,7 @@ public class Builder {
 	protected void addProvides(final CharSequence name, final CharSequence version, final int flag) {
 		provides.put(name.toString(), new Dependency(name.toString(), version.toString(), flag));
 	}
-	
+
 	/**
 	 * Adds a dependency to the RPM package. This dependency version will be marked as the exact
 	 * requirement, and the package will require the named dependency with exactly this version at
@@ -181,7 +182,7 @@ public class Builder {
 	public void addDependencyLess( final CharSequence name, final CharSequence version) {
 		int flag = LESS | EQUAL;
 		if (name.toString().startsWith("rpmlib(")){
-			flag = flag | RPMLIB; 
+			flag = flag | RPMLIB;
 		}
 		addDependency( name, version, flag);
 	}
@@ -210,108 +211,108 @@ public class Builder {
 	protected void addDependency( final CharSequence name, final CharSequence version, final int flag) {
 		requires.add(new Dependency(name.toString(), version.toString(), flag));
 	}
-	
+
 	/**
-     * Adds a header entry value to the header. For example use this to set the source RPM package
-     * name on your RPM
-     * @param tag the header tag to set
-     * @param value the value to set the header entry with
-     */
+	 * Adds a header entry value to the header. For example use this to set the source RPM package
+	 * name on your RPM
+	 * @param tag the header tag to set
+	 * @param value the value to set the header entry with
+	 */
 	public void addHeaderEntry( final Tag tag, final String value) {
-	    format.getHeader().createEntry(tag, value);
-	}
-	
-	/**
-     * Adds a header entry byte (8-bit) value to the header. 
-     * @param tag the header tag to set
-     * @param value the value to set the header entry with
-	 * @throws ClassCastException - if the type required by tag.type() is not byte[]
-     */
-	public void addHeaderEntry( final Tag tag, final byte value) {
-	    format.getHeader().createEntry(tag, new byte[] {value});
-	}
-	
-	/**
-     * Adds a header entry char (8-bit) value to the header. 
-     * @param tag the header tag to set
-     * @param value the value to set the header entry with
-	 * @throws ClassCastException - if the type required by tag.type() is not byte[]
-     */
-	public void addHeaderEntry( final Tag tag, final char value) {
-	    format.getHeader().createEntry(tag, new byte[] {(byte) value});
+		format.getHeader().createEntry(tag, value);
 	}
 
-	
 	/**
-     * Adds a header entry short (16-bit) value to the header. 
-     * @param tag the header tag to set
-     * @param value the value to set the header entry with
+	 * Adds a header entry byte (8-bit) value to the header.
+	 * @param tag the header tag to set
+	 * @param value the value to set the header entry with
+	 * @throws ClassCastException - if the type required by tag.type() is not byte[]
+	 */
+	public void addHeaderEntry( final Tag tag, final byte value) {
+		format.getHeader().createEntry(tag, new byte[] {value});
+	}
+
+	/**
+	 * Adds a header entry char (8-bit) value to the header.
+	 * @param tag the header tag to set
+	 * @param value the value to set the header entry with
+	 * @throws ClassCastException - if the type required by tag.type() is not byte[]
+	 */
+	public void addHeaderEntry( final Tag tag, final char value) {
+		format.getHeader().createEntry(tag, new byte[] {(byte) value});
+	}
+
+
+	/**
+	 * Adds a header entry short (16-bit) value to the header.
+	 * @param tag the header tag to set
+	 * @param value the value to set the header entry with
 	 * @throws ClassCastException - if the type required by tag.type() is not short[]
-     */
+	 */
 	public void addHeaderEntry( final Tag tag, final short value) {
-	    format.getHeader().createEntry(tag,  new short[] {value});
+		format.getHeader().createEntry(tag,  new short[] {value});
 	}
-	
+
 	/**
-     * Adds a header entry int (32-bit) value to the header. 
-     * @param tag the header tag to set
-     * @param value the value to set the header entry with
+	 * Adds a header entry int (32-bit) value to the header.
+	 * @param tag the header tag to set
+	 * @param value the value to set the header entry with
  	 * @throws ClassCastException - if the type required by tag.type() is not int[]
-    */
+	*/
 	public void addHeaderEntry( final Tag tag, final int value) {
-	    format.getHeader().createEntry(tag, new int[] {value});
+		format.getHeader().createEntry(tag, new int[] {value});
 	}
-	
+
 	/**
-     * Adds a header entry long (64-bit) value to the header. 
-     * @param tag the header tag to set
-     * @param value the value to set the header entry with
+	 * Adds a header entry long (64-bit) value to the header.
+	 * @param tag the header tag to set
+	 * @param value the value to set the header entry with
  	 * @throws ClassCastException - if the type required by tag.type() is not long[]
-     */
+	 */
 	public void addHeaderEntry( final Tag tag, final long value) {
-	    format.getHeader().createEntry(tag,  new long[] {value});
+		format.getHeader().createEntry(tag,  new long[] {value});
 	}
-	
+
 	/**
-     * Adds a header entry byte array (8-bit) value to the header. 
-     * @param tag the header tag to set
-     * @param value the value to set the header entry with
+	 * Adds a header entry byte array (8-bit) value to the header.
+	 * @param tag the header tag to set
+	 * @param value the value to set the header entry with
  	 * @throws ClassCastException - if the type required by tag.type() is not byte[]
-     */
+	 */
 	public void addHeaderEntry( final Tag tag, final byte[] value) {
-	    format.getHeader().createEntry(tag, value);
+		format.getHeader().createEntry(tag, value);
 	}
-	
+
 	/**
-     * Adds a header entry short array (16-bit) value to the header. 
-     * @param tag the header tag to set
-     * @param value the value to set the header entry with
+	 * Adds a header entry short array (16-bit) value to the header.
+	 * @param tag the header tag to set
+	 * @param value the value to set the header entry with
  	 * @throws ClassCastException - if the type required by tag.type() is not short[]
-     */
+	 */
 	public void addHeaderEntry( final Tag tag, final short[] value) {
-	    format.getHeader().createEntry(tag, value);
+		format.getHeader().createEntry(tag, value);
 	}
-	
+
 	/**
-     * Adds a header entry int (32-bit) array value to the header. 
-     * @param tag the header tag to set
-     * @param value the value to set the header entry with
+	 * Adds a header entry int (32-bit) array value to the header.
+	 * @param tag the header tag to set
+	 * @param value the value to set the header entry with
  	 * @throws ClassCastException - if the type required by tag.type() is not int[]
-     */
+	 */
 	public void addHeaderEntry( final Tag tag, final int[] value) {
-	    format.getHeader().createEntry(tag, value);
+		format.getHeader().createEntry(tag, value);
 	}
-	
+
 	/**
-     * Adds a header entry long (64-bit) array value to the header. 
-     * @param tag the header tag to set
-     * @param value the value to set the header entry with
+	 * Adds a header entry long (64-bit) array value to the header.
+	 * @param tag the header tag to set
+	 * @param value the value to set the header entry with
  	 * @throws ClassCastException - if the type required by tag.type() is not long[]
-     */
+	 */
 	public void addHeaderEntry( final Tag tag, final long[] value) {
-	    format.getHeader().createEntry(tag, value);
+		format.getHeader().createEntry(tag, value);
 	}
-	
+
 	/**
 	 * @param illegalChars the illegal characters to check for.
 	 * @param variable the character sequence to check for illegal characters.
@@ -331,7 +332,7 @@ public class Builder {
 
 	/**
 	 * <b>Required Field</b>. Sets the package information, such as the rpm name, the version, and the release number.
-	 * 
+	 *
 	 * @param name the name of the RPM package.
 	 * @param version the version of the new package.
 	 * @param release the release number, specified after the version, of the new RPM.
@@ -355,7 +356,7 @@ public class Builder {
 	public void setPackage( final CharSequence name, final CharSequence version, final CharSequence release) {
 		setPackage(name, version, release, 0);
 	}
-	
+
 	/**
 	 * <b>Required Field</b>. Sets the type of the RPM to be either binary or source.
 	 *
@@ -375,7 +376,7 @@ public class Builder {
 	public void setPlatform( final Architecture arch, final Os os) {
 		format.getLead().setArch( arch);
 		format.getLead().setOs( os);
-		
+
 		final CharSequence archName = arch.toString().toLowerCase();
 		final CharSequence osName = os.toString().toLowerCase();
 		format.getHeader().createEntry( ARCH, archName);
@@ -384,24 +385,24 @@ public class Builder {
 		format.getHeader().createEntry( RHNPLATFORM, archName);
 	}
 
-    /**
-     * <b>Required Field</b>. Sets the platform related headers for the resulting RPM. The platform is specified as a
-     * combination of target architecture and OS. 
-     *
-     * @param arch the target architecture.
-     * @param osName the non-standard target operating system.
-     */
-    public void setPlatform( final Architecture arch, final CharSequence osName) {
-            format.getLead().setArch( arch);
-            format.getLead().setOs( Os.UNKNOWN);
-            
-            final CharSequence archName = arch.toString().toLowerCase();
-            format.getHeader().createEntry( ARCH, archName);
-            format.getHeader().createEntry( OS, osName);
-            format.getHeader().createEntry( PLATFORM, archName + "-" + osName);
-            format.getHeader().createEntry( RHNPLATFORM, archName);
-    }
-	
+	/**
+	 * <b>Required Field</b>. Sets the platform related headers for the resulting RPM. The platform is specified as a
+	 * combination of target architecture and OS.
+	 *
+	 * @param arch the target architecture.
+	 * @param osName the non-standard target operating system.
+	 */
+	public void setPlatform( final Architecture arch, final CharSequence osName) {
+			format.getLead().setArch( arch);
+			format.getLead().setOs( Os.UNKNOWN);
+
+			final CharSequence archName = arch.toString().toLowerCase();
+			format.getHeader().createEntry( ARCH, archName);
+			format.getHeader().createEntry( OS, osName);
+			format.getHeader().createEntry( PLATFORM, archName + "-" + osName);
+			format.getHeader().createEntry( RHNPLATFORM, archName);
+	}
+
 	/**
 	 * <b>Required Field</b>. Sets the summary text for the file. The summary is generally a short, one line description of the
 	 * function of the package, and is often shown by RPM tools.
@@ -491,7 +492,7 @@ public class Builder {
 	 * provide library functions.  Note that this method causes the existing provides set to be
 	 * overwritten and therefore should be called before adding any other contents via
 	 * the <code>addProvides()</code> methods.
-	 * 
+	 *
 	 * You should use <code>addProvides()</code> instead.
 	 *
 	 * @param provides dependency provided by this package.
@@ -513,7 +514,7 @@ public class Builder {
 	public void setFiles( final Contents contents) {
 		this.contents = contents;
 	}
-	
+
 	/**
 	 * Adds a source rpm.
 	 *
@@ -522,7 +523,7 @@ public class Builder {
 	public void setSourceRpm( final String rpm) {
 		if ( rpm != null) format.getHeader().createEntry( SOURCERPM, rpm);
 	}
-	
+
 	/**
 	 * Sets the package prefix directories to allow any files installed under
 	 * them to be relocatable.
@@ -533,57 +534,57 @@ public class Builder {
 		if ( prefixes != null && 0 < prefixes.length) format.getHeader().createEntry( PREFIXES, prefixes);
 	}
 
-    /**
-     * Return the content of the specified script file as a String.
-     *
-     * @param file the script file to be read
-     */
-    private String readScript( File file) throws IOException {
-        if ( file == null) return null;
+	/**
+	 * Return the content of the specified script file as a String.
+	 *
+	 * @param file the script file to be read
+	 */
+	private String readScript( File file) throws IOException {
+		if ( file == null) return null;
 
-        StringBuilder script = new StringBuilder();
-        BufferedReader in = new BufferedReader( new FileReader(file));
+		StringBuilder script = new StringBuilder();
+		BufferedReader in = new BufferedReader( new FileReader(file));
 
-        try {
-            String line;
-            while (( line = in.readLine()) != null) {
-                script.append( line);
-                script.append( "\n");
-            }
-        } finally {
-            in.close();
-        }
+		try {
+			String line;
+			while (( line = in.readLine()) != null) {
+				script.append( line);
+				script.append( "\n");
+			}
+		} finally {
+			in.close();
+		}
 
-        return script.toString();
-    }
+		return script.toString();
+	}
 
-    /**
-     * Returns the program use to run the specified script (guessed by parsing 
-     * the shebang at the beginning of the script)
-     * 
-     * @param script
-     */
-    private String readProgram( String script) {
-        String program = null;
-        
-        if ( script != null) {
-            Pattern pattern = Pattern.compile( "^#!(/.*)");
-            Matcher matcher = pattern.matcher( script);
-            if ( matcher.find()) {
-                program = matcher.group( 1);
-            }            
-        }
-                
-        return program;
-    }
+	/**
+	 * Returns the program use to run the specified script (guessed by parsing
+	 * the shebang at the beginning of the script)
+	 *
+	 * @param script
+	 */
+	private String readProgram( String script) {
+		String program = null;
 
-    /**
+		if ( script != null) {
+			Pattern pattern = Pattern.compile( "^#!(/.*)");
+			Matcher matcher = pattern.matcher( script);
+			if ( matcher.find()) {
+				program = matcher.group( 1);
+			}
+		}
+
+		return program;
+	}
+
+	/**
 	 * Declares a script to be run as part of the RPM pre-transaction. The
 	 * script will be run using the interpreter declared with the
 	 * {@link #setPreTransProgram(String)} method.
 	 *
 	 * @param script Script contents to run (i.e. shell commands)
-	 */ 
+	 */
 	public void setPreTransScript( final String script) {
 		setPreTransProgram(readProgram(script));
 		if ( script != null) format.getHeader().createEntry( PRETRANSSCRIPT, script);
@@ -617,19 +618,19 @@ public class Builder {
 			format.getHeader().createEntry( PRETRANSPROG, program);
 		}
 	}
-    
+
 	/**
 	 * Declares a script to be run as part of the RPM pre-installation. The
 	 * script will be run using the interpreter declared with the
 	 * {@link #setPreInstallProgram(String)} method.
 	 *
 	 * @param script Script contents to run (i.e. shell commands)
-	 */ 
+	 */
 	public void setPreInstallScript( final String script) {
-        setPreInstallProgram(readProgram(script));
-        if ( script != null) format.getHeader().createEntry( PREINSCRIPT, script);
+		setPreInstallProgram(readProgram(script));
+		if ( script != null) format.getHeader().createEntry( PREINSCRIPT, script);
 	}
-	
+
 	/**
 	 * Declares a script file to be run as part of the RPM pre-installation. The
 	 * script will be run using the interpreter declared with the
@@ -642,7 +643,7 @@ public class Builder {
 		setPreInstallScript(readScript(file));
 	}
 
-    /**
+	/**
 	 * Declares the interpreter to be used when invoking the RPM
 	 * pre-installation script that can be set with the
 	 * {@link #setPreInstallScript(String)} method.
@@ -658,7 +659,7 @@ public class Builder {
 			format.getHeader().createEntry( PREINPROG, program);
 		}
 	}
-	
+
 	/**
 	 * Declares a script to be run as part of the RPM post-installation. The
 	 * script will be run using the interpreter declared with the
@@ -667,10 +668,10 @@ public class Builder {
 	 * @param script Script contents to run (i.e. shell commands)
 	 */
 	public void setPostInstallScript( final String script) {
-        setPostInstallProgram(readProgram(script));
-        if ( script != null) format.getHeader().createEntry( POSTINSCRIPT, script);
+		setPostInstallProgram(readProgram(script));
+		if ( script != null) format.getHeader().createEntry( POSTINSCRIPT, script);
 	}
-	
+
 	/**
 	 * Declares a script file to be run as part of the RPM post-installation. The
 	 * script will be run using the interpreter declared with the
@@ -680,10 +681,10 @@ public class Builder {
 	 * @throws IOException there was an IO error
 	 */
 	public void setPostInstallScript( final File file) throws IOException {
-        setPostInstallScript(readScript(file));
+		setPostInstallScript(readScript(file));
 	}
 
-    /**
+	/**
 	 * Declares the interpreter to be used when invoking the RPM
 	 * post-installation script that can be set with the
 	 * {@link #setPostInstallScript(String)} method.
@@ -708,8 +709,8 @@ public class Builder {
 	 * @param script Script contents to run (i.e. shell commands)
 	 */
 	public void setPreUninstallScript( final String script) {
-        setPreUninstallProgram(readProgram(script));
-        if ( script != null) format.getHeader().createEntry( PREUNSCRIPT, script);
+		setPreUninstallProgram(readProgram(script));
+		if ( script != null) format.getHeader().createEntry( PREUNSCRIPT, script);
 	}
 
 	/**
@@ -721,10 +722,10 @@ public class Builder {
 	 * @throws IOException there was an IO error
 	 */
 	public void setPreUninstallScript( final File file) throws IOException {
-        setPreUninstallScript(readScript(file));
+		setPreUninstallScript(readScript(file));
 	}
 
-    /**
+	/**
 	 * Declares the interpreter to be used when invoking the RPM
 	 * pre-uninstallation script that can be set with the
 	 * {@link #setPreUninstallScript(String)} method.
@@ -749,8 +750,8 @@ public class Builder {
 	 * @param script Script contents to run (i.e. shell commands)
 	 */
 	public void setPostUninstallScript( final String script) {
-        setPostUninstallProgram(readProgram(script));
-        if ( script != null) format.getHeader().createEntry( POSTUNSCRIPT, script);
+		setPostUninstallProgram(readProgram(script));
+		if ( script != null) format.getHeader().createEntry( POSTUNSCRIPT, script);
 	}
 
 	/**
@@ -762,10 +763,10 @@ public class Builder {
 	 * @throws IOException there was an IO error
 	 */
 	public void setPostUninstallScript( final File file) throws IOException {
-        setPostUninstallScript(readScript(file));
+		setPostUninstallScript(readScript(file));
 	}
 
-    /**
+	/**
 	 * Declares the interpreter to be used when invoking the RPM
 	 * post-uninstallation script that can be set with the
 	 * {@link #setPostUninstallScript(String)} method.
@@ -884,86 +885,86 @@ public class Builder {
 	}
 
 	/**
-     * Add the specified file to the repository payload in order.
-     * The required header entries will automatically be generated
-     * to record the directory names and file names, as well as their
-     * digests.
-     *
-     * @param path the absolute path at which this file will be installed.
-     * @param source the file content to include in this rpm.
-     * @param mode the mode of the target file in standard three octet notation
-     * @param dirmode the mode of the parent directories in standard three octet notation, or -1 for default.
-     * @param uname user owner for the given file
-     * @param gname group owner for the given file
-     * @throws NoSuchAlgorithmException the algorithm isn't supported
-     * @throws IOException there was an IO error
-     */
-    public void addFile( final String path, final File source, final int mode, final int dirmode, final String uname, final String gname) throws NoSuchAlgorithmException, IOException {
-        contents.addFile( path, source, mode, null, uname, gname, dirmode);
-    }
+	 * Add the specified file to the repository payload in order.
+	 * The required header entries will automatically be generated
+	 * to record the directory names and file names, as well as their
+	 * digests.
+	 *
+	 * @param path the absolute path at which this file will be installed.
+	 * @param source the file content to include in this rpm.
+	 * @param mode the mode of the target file in standard three octet notation
+	 * @param dirmode the mode of the parent directories in standard three octet notation, or -1 for default.
+	 * @param uname user owner for the given file
+	 * @param gname group owner for the given file
+	 * @throws NoSuchAlgorithmException the algorithm isn't supported
+	 * @throws IOException there was an IO error
+	 */
+	public void addFile( final String path, final File source, final int mode, final int dirmode, final String uname, final String gname) throws NoSuchAlgorithmException, IOException {
+		contents.addFile( path, source, mode, null, uname, gname, dirmode);
+	}
 
-    /**
-     * Add the specified file to the repository payload in order.
-     * The required header entries will automatically be generated
-     * to record the directory names and file names, as well as their
-     * digests.
-     *
-     * @param path the absolute path at which this file will be installed.
-     * @param source the file content to include in this rpm.
-     * @param mode the mode of the target file in standard three octet notation
-     * @param dirmode the mode of the parent directories in standard three octet notation, or -1 for default.
-     * @param directive directive indicating special handling for this file.
-     * @param uname user owner for the given file
-     * @param gname group owner for the given file
-     * @throws NoSuchAlgorithmException the algorithm isn't supported
-     * @throws IOException there was an IO error
-     */
-    public void addFile( final String path, final File source, final int mode, final int dirmode, final Directive directive, final String uname, final String gname) throws NoSuchAlgorithmException, IOException {
-        contents.addFile( path, source, mode, directive, uname, gname, dirmode);
-    }
+	/**
+	 * Add the specified file to the repository payload in order.
+	 * The required header entries will automatically be generated
+	 * to record the directory names and file names, as well as their
+	 * digests.
+	 *
+	 * @param path the absolute path at which this file will be installed.
+	 * @param source the file content to include in this rpm.
+	 * @param mode the mode of the target file in standard three octet notation
+	 * @param dirmode the mode of the parent directories in standard three octet notation, or -1 for default.
+	 * @param directive directive indicating special handling for this file.
+	 * @param uname user owner for the given file
+	 * @param gname group owner for the given file
+	 * @throws NoSuchAlgorithmException the algorithm isn't supported
+	 * @throws IOException there was an IO error
+	 */
+	public void addFile( final String path, final File source, final int mode, final int dirmode, final Directive directive, final String uname, final String gname) throws NoSuchAlgorithmException, IOException {
+		contents.addFile( path, source, mode, directive, uname, gname, dirmode);
+	}
 
-    /**
-     * Add the specified file to the repository payload in order.
-     * The required header entries will automatically be generated
-     * to record the directory names and file names, as well as their
-     * digests.
-     *
-     * @param path the absolute path at which this file will be installed.
-     * @param source the file content to include in this rpm.
-     * @param mode the mode of the target file in standard three octet notation, or -1 for default.
-     * @param dirmode the mode of the parent directories in standard three octet notation, or -1 for default.
-     * @param directive directive indicating special handling for this file.
-     * @param uname user owner for the given file, or null for default user.
-     * @param gname group owner for the given file, or null for default group.
-     * @param addParents whether to create parent directories for the file, defaults to true for other methods.
-     * @throws NoSuchAlgorithmException the algorithm isn't supported
-     * @throws IOException there was an IO error
-     */
-    public void addFile( final String path, final File source, final int mode, final int dirmode, final Directive directive, final String uname, final String gname, final boolean addParents) throws NoSuchAlgorithmException, IOException {
-        contents.addFile( path, source, mode, directive, uname, gname, dirmode, addParents);
-    }
+	/**
+	 * Add the specified file to the repository payload in order.
+	 * The required header entries will automatically be generated
+	 * to record the directory names and file names, as well as their
+	 * digests.
+	 *
+	 * @param path the absolute path at which this file will be installed.
+	 * @param source the file content to include in this rpm.
+	 * @param mode the mode of the target file in standard three octet notation, or -1 for default.
+	 * @param dirmode the mode of the parent directories in standard three octet notation, or -1 for default.
+	 * @param directive directive indicating special handling for this file.
+	 * @param uname user owner for the given file, or null for default user.
+	 * @param gname group owner for the given file, or null for default group.
+	 * @param addParents whether to create parent directories for the file, defaults to true for other methods.
+	 * @throws NoSuchAlgorithmException the algorithm isn't supported
+	 * @throws IOException there was an IO error
+	 */
+	public void addFile( final String path, final File source, final int mode, final int dirmode, final Directive directive, final String uname, final String gname, final boolean addParents) throws NoSuchAlgorithmException, IOException {
+		contents.addFile( path, source, mode, directive, uname, gname, dirmode, addParents);
+	}
 
-    /**
-     * Add the specified file to the repository payload in order.
-     * The required header entries will automatically be generated
-     * to record the directory names and file names, as well as their
-     * digests.
-     *
-     * @param path the absolute path at which this file will be installed.
-     * @param source the file content to include in this rpm.
-     * @param mode the mode of the target file in standard three octet notation, or -1 for default.
-     * @param dirmode the mode of the parent directories in standard three octet notation, or -1 for default.
-     * @param directive directive indicating special handling for this file.
-     * @param uname user owner for the given file, or null for default user.
-     * @param gname group owner for the given file, or null for default group.
-     * @param addParents whether to create parent directories for the file, defaults to true for other methods.
-     * @param verifyFlags verify flags
-     * @throws NoSuchAlgorithmException the algorithm isn't supported
-     * @throws IOException there was an IO error
-     */
-    public void addFile( final String path, final File source, final int mode, final int dirmode, final Directive directive, final String uname, final String gname, final boolean addParents, final int verifyFlags) throws NoSuchAlgorithmException, IOException {
-        contents.addFile( path, source, mode, directive, uname, gname, dirmode, addParents, verifyFlags);
-    }
+	/**
+	 * Add the specified file to the repository payload in order.
+	 * The required header entries will automatically be generated
+	 * to record the directory names and file names, as well as their
+	 * digests.
+	 *
+	 * @param path the absolute path at which this file will be installed.
+	 * @param source the file content to include in this rpm.
+	 * @param mode the mode of the target file in standard three octet notation, or -1 for default.
+	 * @param dirmode the mode of the parent directories in standard three octet notation, or -1 for default.
+	 * @param directive directive indicating special handling for this file.
+	 * @param uname user owner for the given file, or null for default user.
+	 * @param gname group owner for the given file, or null for default group.
+	 * @param addParents whether to create parent directories for the file, defaults to true for other methods.
+	 * @param verifyFlags verify flags
+	 * @throws NoSuchAlgorithmException the algorithm isn't supported
+	 * @throws IOException there was an IO error
+	 */
+	public void addFile( final String path, final File source, final int mode, final int dirmode, final Directive directive, final String uname, final String gname, final boolean addParents, final int verifyFlags) throws NoSuchAlgorithmException, IOException {
+		contents.addFile( path, source, mode, directive, uname, gname, dirmode, addParents, verifyFlags);
+	}
 
 	/**
 	 * Add the specified file to the repository payload in order.
@@ -983,7 +984,7 @@ public class Builder {
 	public void addFile( final String path, final File source, final int mode, final Directive directive, final String uname, final String gname) throws NoSuchAlgorithmException, IOException {
 		contents.addFile( path, source, mode, directive, uname, gname);
 	}
-	
+
 	/**
 	 * Add the specified file to the repository payload in order.
 	 * The required header entries will automatically be generated
@@ -1022,7 +1023,7 @@ public class Builder {
 	 * @param path the absolute path at which this file will be installed.
 	 * @param source the file content to include in this rpm.
 	 * @param mode the mode of the target file in standard three octet notation
-	 *  @param dirmode the mode of the parent directories in standard three octet notation, or -1 for default.
+	 * @param dirmode the mode of the parent directories in standard three octet notation, or -1 for default.
 	 * @throws NoSuchAlgorithmException the algorithm isn't supported
 	 * @throws IOException there was an IO error
 	 */
@@ -1031,43 +1032,43 @@ public class Builder {
 	}
 
 	/**
-     * Add the specified file to the repository payload in order by URL.
-     * The required header entries will automatically be generated
-     * to record the directory names and file names, as well as their
-     * digests.
-     *
-     * @param path the absolute path at which this file will be installed.
-     * @param source the file content to include in this rpm.
-     * @param mode the mode of the target file in standard three octet notation
-     * @param dirmode the mode of the parent directories in standard three octet notation, or -1 for default.
-     * @param username ownership of added file
-     * @param group ownership of added file
-     * @throws NoSuchAlgorithmException the algorithm isn't supported
-     * @throws IOException there was an IO error
-     */
-    public void addURL( final String path, final URL source, final int mode, final int dirmode, final String username, final String group) throws NoSuchAlgorithmException, IOException {
-        contents.addURL( path, source, mode, null, username, group, dirmode);
-    }
+	 * Add the specified file to the repository payload in order by URL.
+	 * The required header entries will automatically be generated
+	 * to record the directory names and file names, as well as their
+	 * digests.
+	 *
+	 * @param path the absolute path at which this file will be installed.
+	 * @param source the file content to include in this rpm.
+	 * @param mode the mode of the target file in standard three octet notation
+	 * @param dirmode the mode of the parent directories in standard three octet notation, or -1 for default.
+	 * @param username ownership of added file
+	 * @param group ownership of added file
+	 * @throws NoSuchAlgorithmException the algorithm isn't supported
+	 * @throws IOException there was an IO error
+	 */
+	public void addURL( final String path, final URL source, final int mode, final int dirmode, final String username, final String group) throws NoSuchAlgorithmException, IOException {
+		contents.addURL( path, source, mode, null, username, group, dirmode);
+	}
 
-    /**
-     * Add the specified file to the repository payload in order by URL.
-     * The required header entries will automatically be generated
-     * to record the directory names and file names, as well as their
-     * digests.
-     *
-     * @param path the absolute path at which this file will be installed.
-     * @param source the file content to include in this rpm.
-     * @param mode the mode of the target file in standard three octet notation
-     * @param dirmode the mode of the parent directories in standard three octet notation, or -1 for default.
-     * @param directive directive indicating special handling for this file.
-     * @param username ownership of added file
-     * @param group ownership of added file
-     * @throws NoSuchAlgorithmException the algorithm isn't supported
-     * @throws IOException there was an IO error
-     */
-    public void addURL( final String path, final URL source, final int mode, final int dirmode, final Directive directive, final String username, final String group) throws NoSuchAlgorithmException, IOException {
-        contents.addURL( path, source, mode, directive, username, group, dirmode);
-    }
+	/**
+	 * Add the specified file to the repository payload in order by URL.
+	 * The required header entries will automatically be generated
+	 * to record the directory names and file names, as well as their
+	 * digests.
+	 *
+	 * @param path the absolute path at which this file will be installed.
+	 * @param source the file content to include in this rpm.
+	 * @param mode the mode of the target file in standard three octet notation
+	 * @param dirmode the mode of the parent directories in standard three octet notation, or -1 for default.
+	 * @param directive directive indicating special handling for this file.
+	 * @param username ownership of added file
+	 * @param group ownership of added file
+	 * @throws NoSuchAlgorithmException the algorithm isn't supported
+	 * @throws IOException there was an IO error
+	 */
+	public void addURL( final String path, final URL source, final int mode, final int dirmode, final Directive directive, final String username, final String group) throws NoSuchAlgorithmException, IOException {
+		contents.addURL( path, source, mode, directive, username, group, dirmode);
+	}
 
 	/**
 	 * Adds the directory to the repository with the default mode of <code>644</code>.
@@ -1094,7 +1095,7 @@ public class Builder {
 	public void addDirectory( final String path, final int permissions, final Directive directive, final String uname, final String gname) throws NoSuchAlgorithmException, IOException {
 		contents.addDirectory( path, permissions, directive, uname, gname);
 	}
-	
+
 	/**
 	 * Adds the directory to the repository.
 	 *
@@ -1103,14 +1104,14 @@ public class Builder {
 	 * @param directive directive indicating special handling for this file.
 	 * @param uname user owner of the directory
 	 * @param gname group owner of the directory
-	 * @param addParents whether to add parent directories to the rpm 
+	 * @param addParents whether to add parent directories to the rpm
 	 * @throws NoSuchAlgorithmException the algorithm isn't supported
 	 * @throws IOException there was an IO error
 	 */
 	public void addDirectory( final String path, final int permissions, final Directive directive, final String uname, final String gname, final boolean addParents) throws NoSuchAlgorithmException, IOException {
 		contents.addDirectory( path, permissions, directive, uname, gname, addParents);
 	}
-	
+
 	/**
 	 * Adds the directory to the repository with the default mode of <code>644</code>.
 	 *
@@ -1172,7 +1173,7 @@ public class Builder {
 	public void addSignature( final PrivateKey key) {
 		signatures.add( key);
 	}
-	
+
 	/**
 	 * Adds the supplied Changelog file as a Changelog to the header
 	 * @param changelogFile File containing the Changelog information
@@ -1182,46 +1183,56 @@ public class Builder {
 	public void addChangelogFile(File changelogFile) throws IOException, ChangelogParseException {
 		new ChangelogHandler(this.format.getHeader()).addChangeLog(changelogFile);
 	}
-	
 
-    /**
-     * Sets the PGP key ring file used for header and header + payload signature.
-     * Alternatively you can set the private key directly with {@link #setPrivateKey(org.bouncycastle.openpgp.PGPPrivateKey)}
-     * @param privateKeyRingFile the private key ring file
-     */
-    public void setPrivateKeyRingFile( File privateKeyRingFile ) {
-        this.privateKeyRingFile = privateKeyRingFile;
-    }
 
-    /**
-     * Selects a private key from the current {@link #setPrivateKeyRingFile(java.io.File) private key ring file}.
-     * If no key is specified, the first signing key will be selected.
-     * @param privateKeyId hex key id
-     */
-    public void setPrivateKeyId( String privateKeyId ) {
-        this.privateKeyId = privateKeyId;
-    }
+	/**
+	 * Sets the PGP key ring file used for header and header + payload signature.
+	 * Alternatively you can set the private key directly with {@link #setPrivateKey(org.bouncycastle.openpgp.PGPPrivateKey)}
+	 * @param privateKeyRingFile the private key ring file
+	 */
+	public void setPrivateKeyRingFile( File privateKeyRingFile ) {
+		this.privateKeyRingFile = privateKeyRingFile;
+	}
 
-    /**
-     * Passphrase for the private key
-     * @param privateKeyPassphrase the private key pass phrase
-     */
-    public void setPrivateKeyPassphrase( String privateKeyPassphrase ) {
-        this.privateKeyPassphrase = privateKeyPassphrase;
-    }
+	/**
+	 * Selects a private key from the current {@link #setPrivateKeyRingFile(java.io.File) private key ring file}.
+	 * If no key is specified, the first signing key will be selected.
+	 * @param privateKeyId hex key id
+	 */
+	public void setPrivateKeyId( String privateKeyId ) {
+		this.privateKeyId = privateKeyId;
+	}
 
-    /**
-     * Sets the private key for header and payload signing directly. Alternatively, you can set
-     * {@link #setPrivateKeyRingFile(java.io.File) key ring file}, {@link #setPrivateKeyId(String) key id}
-     * and {@link #setPrivateKeyPassphrase(String) passphrase} directly. Setting the private key has more
-     * priorisation than providing key ring file.
-     * @param privateKey the PGP private key
-     */
-    public void setPrivateKey( PGPPrivateKey privateKey ) {
-        this.privateKey = privateKey;
-    }
+	/**
+	 * Passphrase for the private key
+	 * @param privateKeyPassphrase the private key pass phrase
+	 */
+	public void setPrivateKeyPassphrase( String privateKeyPassphrase ) {
+		this.privateKeyPassphrase = privateKeyPassphrase;
+	}
 
-    /**
+	/**
+	 * Sets the private key for header and payload signing directly. Alternatively, you can set
+	 * {@link #setPrivateKeyRingFile(java.io.File) key ring file}, {@link #setPrivateKeyId(String) key id}
+	 * and {@link #setPrivateKeyPassphrase(String) passphrase} directly. Setting the private key has more
+	 * priorisation than providing key ring file.
+	 * @param privateKey the PGP private key
+	 */
+	public void setPrivateKey( PGPPrivateKey privateKey ) {
+		this.privateKey = privateKey;
+	}
+
+	/**
+	 * Sets the signature size for generating keys with different sizes
+	 * This should only be used if the exact size of the signature is known.
+	 * e.g. 287 for a 2048 bit RSA key (default) or 543 for a 4096 bit RSA key.
+	 * @param privateKeySignatureSize the signature size
+	 */
+	public void setPrivateKeySignatureSize( int privateKeySignatureSize ) {
+		this.privateKeySignatureSize = privateKeySignatureSize;
+	}
+
+	/**
 	 * Generates an RPM with a standard name consisting of the RPM package name, version, release,
 	 * and type in the given directory.
 	 *
@@ -1321,8 +1332,8 @@ public class Builder {
 		final Entry< String[]> sha = ( Entry< String[]>) format.getSignature().addEntry( SHA1HEADER, 1);
 		sha.setSize( SHASIZE);
 
-        SignatureGenerator signatureGenerator = createSignatureGenerator();
-        signatureGenerator.prepare( format.getSignature() );
+		SignatureGenerator signatureGenerator = createSignatureGenerator();
+		signatureGenerator.prepare( format.getSignature() );
 
 		format.getLead().write( original);
 		signature.setValues( getSignature( format.getSignature().count()));
@@ -1331,12 +1342,12 @@ public class Builder {
 		final Key< Integer> sigsizekey = output.start();
 		final Key< byte[]> shakey = output.start( "SHA");
 		final Key< byte[]> md5key = output.start( "MD5");
-        signatureGenerator.startBeforeHeader( output );
+		signatureGenerator.startBeforeHeader( output );
 
 		immutable.setValues( getImmutable( format.getHeader().count()));
 		format.getHeader().write( output);
 		sha.setValues( new String[] { Util.hex( output.finish( shakey))});
-        signatureGenerator.finishAfterHeader( output );
+		signatureGenerator.finishAfterHeader( output );
 
 		final GZIPOutputStream zip = new GZIPOutputStream( Channels.newOutputStream( output));
 		final WritableChannelWrapper compressor = new WritableChannelWrapper( Channels.newChannel( zip));
@@ -1351,7 +1362,7 @@ public class Builder {
 			final String path = header.getName();
 			if ( path.startsWith( "/")) header.setName( "." + path);
 			total = header.write( compressor, total);
-			
+
 			final Object object = contents.getSource( header);
 			if ( object instanceof File) {
 				FileInputStream fin = new FileInputStream(( File) object);
@@ -1376,7 +1387,7 @@ public class Builder {
 				total += header.skip( compressor, target.length());
 			}
 		}
-		
+
 		final CpioHeader trailer = new CpioHeader();
 		trailer.setLast();
 		total = trailer.write( compressor, total);
@@ -1389,21 +1400,21 @@ public class Builder {
 
 		payload.setValues( new int[] { length});
 		zip.finish();
-		
+
 		md5.setValues( output.finish( md5key));
 		sigsize.setValues( new int[] { output.finish( sigsizekey)});
-        signatureGenerator.finishAfterPayload( output );
+		signatureGenerator.finishAfterPayload( output );
 		format.getSignature().writePending( original);
 	}
 
-    protected SignatureGenerator createSignatureGenerator() {
-        if (privateKey != null) {
-           return new SignatureGenerator( privateKey );
-        }
-        return new SignatureGenerator( privateKeyRingFile, privateKeyId, privateKeyPassphrase);
-    }
+	protected SignatureGenerator createSignatureGenerator() {
+		if (privateKey != null) {
+			return new SignatureGenerator( privateKey, privateKeySignatureSize );
+		}
+		return new SignatureGenerator( privateKeyRingFile, privateKeyId, privateKeyPassphrase, privateKeySignatureSize );
+	}
 
-    protected byte[] getSignature( final int count) {
+	protected byte[] getSignature( final int count) {
 		return getSpecial( 0x0000003E, count);
 	}
 
